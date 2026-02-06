@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEM CRITICAL ERROR</title>
+    <title>SYSTEM OVERRIDE</title>
     <style>
         body {
             background-color: black;
-            color: #00ff00;
-            font-family: 'Courier New', Courier, monospace;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -18,167 +18,198 @@
             overflow: hidden;
         }
 
-        #container {
+        /* Container Utama */
+        #terminal {
             width: 90%;
             max-width: 600px;
-            border: 2px solid #00ff00;
-            padding: 20px;
-            background: rgba(0, 20, 0, 0.9);
-            box-shadow: 0 0 30px rgba(0, 255, 0, 0.5);
+            border: 1px solid #0f0;
+            padding: 15px;
+            background: rgba(0, 20, 0, 0.95);
+            box-shadow: 0 0 20px #0f0;
             position: relative;
-            z-index: 2;
+            z-index: 10;
         }
 
-        h1 {
-            font-size: 1.2rem;
+        /* Header Berkedip */
+        h2 {
             text-align: center;
-            color: #ff0000;
-            text-shadow: 0 0 10px red;
-            animation: blink 0.5s infinite;
+            color: red;
+            animation: blink 0.4s infinite;
+            margin-top: 0;
+            text-transform: uppercase;
         }
 
-        @keyframes blink {
-            0% { opacity: 1; }
-            50% { opacity: 0; }
-        }
-
-        #progress-container {
+        /* Progress Bar */
+        #bar-container {
             width: 100%;
-            background-color: #111;
-            height: 25px;
-            border: 1px solid #00ff00;
-            margin: 20px 0;
+            height: 20px;
+            background: #111;
+            border: 1px solid #0f0;
+            margin: 15px 0;
         }
 
-        #progress-bar {
-            width: 0%;
+        #fill {
             height: 100%;
-            background: linear-gradient(90deg, #005500, #00ff00);
-            box-shadow: 0 0 10px #00ff00;
+            width: 0%;
+            background: #0f0;
+            box-shadow: 0 0 10px #0f0;
         }
 
-        #console {
-            height: 250px;
+        /* Console Logs */
+        #logs {
+            height: 150px;
             overflow: hidden;
-            font-size: 0.75rem;
-            line-height: 1.5;
-            color: #00ff00;
+            font-size: 12px;
+            color: #0f0;
+            border-top: 1px dashed #0f0;
+            padding-top: 5px;
         }
 
-        .device-info {
-            color: #ffff00;
+        /* Kotak Kamera */
+        #cam-box {
+            display: none; /* Muncul nanti */
+            margin-top: 15px;
+            border: 2px solid red;
+            position: relative;
+            width: 100%;
+            height: 200px;
+            background: #000;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.8;
+        }
+
+        /* Indikator REC */
+        .rec-tag {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: red;
             font-weight: bold;
-            margin-top: 10px;
-            border-top: 1px dashed #ffff00;
-            padding-top: 10px;
-            display: none; /* Muncul setelah selesai */
+            background: rgba(0,0,0,0.7);
+            padding: 2px 5px;
+            animation: blink 1s infinite;
         }
 
-        /* Efek Matrix Background */
-        #matrix {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            color: rgba(0, 255, 0, 0.15);
-            font-size: 10px;
-            z-index: 1;
-            overflow: hidden;
+        /* Info Device Final */
+        #device-msg {
+            display: none;
+            color: yellow;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 10px;
+            border: 1px solid yellow;
+            padding: 10px;
+        }
+
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* Background Matrix Angka */
+        .bg-matrix {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1; pointer-events: none; opacity: 0.2;
+            word-wrap: break-word; font-size: 10px;
         }
     </style>
 </head>
 <body>
 
-    <div id="matrix"></div>
+    <div class="bg-matrix" id="bg"></div>
 
-    <div id="container">
-        <h1>[!] PERINGATAN: INTRUSI SISTEM [!]</h1>
+    <div id="terminal">
+        <h2>⚠ SYSTEM BREACH ⚠</h2>
         
-        <div id="progress-container">
-            <div id="progress-bar"></div>
+        <div id="cam-box">
+            <div class="rec-tag">● REC [LIVE]</div>
+            <video id="videoElement" autoplay playsinline></video>
         </div>
-        <div style="text-align: center; font-weight: bold;" id="percent">0%</div>
 
-        <div id="console"></div>
+        <div id="bar-container"><div id="fill"></div></div>
+        <div style="text-align: right;" id="pct">0%</div>
 
-        <div id="final-msg" class="device-info"></div>
+        <div id="logs"></div>
+        <div id="device-msg"></div>
     </div>
 
     <script>
-        // Fungsi Deteksi Perangkat
-        function getDeviceInfo() {
-            const ua = navigator.userAgent;
-            let deviceName = "Perangkat Tidak Dikenal";
-
-            if (/android/i.test(ua)) {
-                deviceName = "Smartphone Android (Samsung/Oppo/Vivo)";
-            } else if (/iPhone|iPad|iPod/i.test(ua)) {
-                deviceName = "Perangkat Apple iOS";
-            } else if (/Windows/i.test(ua)) {
-                deviceName = "PC/Laptop Windows";
-            } else if (/Mac/i.test(ua)) {
-                deviceName = "Apple Mac System";
-            }
-            return deviceName;
+        // --- 1. DETEKSI DEVICE ---
+        function getDeviceName() {
+            let ua = navigator.userAgent;
+            if (/android/i.test(ua)) return "Android Smartphone";
+            if (/iphone|ipad/i.test(ua)) return "Apple iOS Device";
+            if (/windows/i.test(ua)) return "Windows System";
+            return "Unknown Device";
         }
 
-        const logs = [
-            "Membuka port 8080...",
-            "Mencoba bypass Google Play Protect...",
-            "Injeksi Trojan.Generic.OS...",
-            "Mengunduh cache galeri...",
-            "Membaca kontak WhatsApp...",
-            "Mengakses sensor biometrik...",
-            "Payload berhasil dikirim.",
-            "Enkripsi file sistem dimulai...",
-            "Menghapus jejak akses root..."
+        // --- 2. LOGIKA HACKING ---
+        const logs = document.getElementById('logs');
+        const fill = document.getElementById('fill');
+        const pct = document.getElementById('pct');
+        const camBox = document.getElementById('cam-box');
+        const vid = document.getElementById('videoElement');
+        const devMsg = document.getElementById('device-msg');
+        
+        const txt = [
+            "Connecting to target...", "Bypassing Firewall...", "Accessing Root...", 
+            "Downloading Photos...", "Reading WhatsApp Chats...", 
+            "Turning on Camera...", "Uploading Face Data...", "System Compromised!"
         ];
 
-        const consoleDiv = document.getElementById('console');
-        const progressBar = document.getElementById('progress-bar');
-        const percentText = document.getElementById('percent');
-        const finalMsg = document.getElementById('final-msg');
-        
-        let progress = 0;
-        let logIndex = 0;
+        let p = 0;
+        let txtIdx = 0;
 
-        function startHacking() {
-            if (progress < 100) {
-                progress += Math.floor(Math.random() * 4) + 1;
-                if (progress > 100) progress = 100;
+        // Isi background dengan angka acak
+        document.getElementById('bg').innerText = Array(2000).fill(0).map(()=>Math.floor(Math.random()*2)).join('');
 
-                progressBar.style.width = progress + "%";
-                percentText.innerText = "PROGRESS: " + progress + "%";
+        function run() {
+            if (p < 100) {
+                p += Math.random() * 2; // Kecepatan
+                if (p > 100) p = 100;
+                
+                fill.style.width = p + "%";
+                pct.innerText = Math.floor(p) + "%";
 
-                if (progress % 10 === 0 && logIndex < logs.length) {
-                    const p = document.createElement('div');
-                    p.innerHTML = `> STAGE_${logIndex}: ${logs[logIndex]}`;
-                    consoleDiv.prepend(p);
-                    logIndex++;
+                // Munculkan teks log
+                if (Math.floor(p) % 10 === 0 && txtIdx < txt.length) {
+                    let div = document.createElement('div');
+                    div.innerText = "> " + txt[txtIdx++];
+                    logs.prepend(div);
                 }
 
-                setTimeout(startHacking, 150);
+                // --- TRIGGER KAMERA DI 40% ---
+                if (p > 40 && camBox.style.display !== "block") {
+                    camBox.style.display = "block";
+                    startCam(); // Minta izin kamera
+                }
+
+                requestAnimationFrame(run);
             } else {
-                // Tampilkan pesan terakhir dengan info perangkat
-                const device = getDeviceInfo();
-                finalMsg.style.display = "block";
-                finalMsg.innerHTML = `AKSES BERHASIL!<br>Smartphone ${device} Anda telah sepenuhnya diambil alih oleh System_Admin_666.`;
-                
-                // Opsional: Suara bip atau alert
-                setTimeout(() => {
-                    alert("KONEKSI TERPUTUS: DATA ANDA SUDAH TERKIRIM KE SERVER KAMI.");
-                }, 500);
+                // SELESAI
+                devMsg.style.display = "block";
+                devMsg.innerHTML = `SUCCESS!<br>${getDeviceName()} HACKED.<br>Data sent to remote server.`;
             }
         }
 
-        // Efek teks matrix di background
-        const matrixDiv = document.getElementById('matrix');
-        for(let i=0; i<50; i++) {
-            const span = document.createElement('div');
-            span.innerText = "100101011001010101101010101010111100";
-            matrixDiv.appendChild(span);
+        // --- 3. FUNGSI KAMERA ---
+        function startCam() {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function (stream) {
+                    vid.srcObject = stream; // Tampilkan wajah korban
+                })
+                .catch(function (err) {
+                    console.log("Kamera ditolak/error, gpp lanjut aja");
+                    vid.style.background = "url('https://media.giphy.com/media/rE7wBmdViwFtm/giphy.gif')"; // Statis noise jika ditolak
+                    vid.style.backgroundSize = "cover";
+                });
+            }
         }
 
-        setTimeout(startHacking, 1000);
+        setTimeout(run, 1000);
     </script>
 </body>
 </html>
